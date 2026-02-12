@@ -1,0 +1,2265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>华住会 · 智慧酒店 IoT 控制台 Demo（准交付级）</title>
+  <style>
+    :root{
+      --bg0:#0b1220;
+      --card: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --muted2: rgba(255,255,255,.55);
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --link: rgba(170,220,255,.92);
+      --focus: 0 0 0 3px rgba(170,220,255,.18);
+      --good: rgba(0,255,180,.95);
+      --warn: rgba(255,210,120,.95);
+      --bad: rgba(255,120,140,.95);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC","Microsoft YaHei","Noto Sans CJK SC", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 15% 20%, rgba(120,170,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(255,120,210,.16), transparent 60%),
+        radial-gradient(900px 700px at 55% 85%, rgba(0,255,180,.10), transparent 55%),
+        linear-gradient(180deg, #070b14 0%, #0b1220 55%, #070b14 100%);
+      overflow:hidden;
+    }
+    a{ color:var(--link); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .app{ grid-template-columns: 1fr; overflow:auto; }
+      .sidebar{ position: sticky; top:0; z-index:10; }
+    }
+
+    .glass{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    /* Sidebar */
+    .sidebar{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      padding: 10px 10px 14px 10px;
+    }
+    .logo{
+      width:34px; height:34px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.35), transparent 60%),
+        radial-gradient(18px 18px at 70% 60%, rgba(170,220,255,.25), transparent 55%),
+        rgba(255,255,255,.10);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .brand h1{ margin:0; font-size: 14px; letter-spacing:.2px; }
+    .brand p{ margin:2px 0 0 0; font-size: 12px; color: var(--muted2); line-height:1.35; }
+
+    .search{
+      display:flex; gap:10px;
+      padding: 0 10px 12px 10px;
+    }
+    .input{
+      flex:1;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline:none;
+    }
+    .input:focus{ box-shadow: var(--focus); border-color: rgba(170,220,255,.28); }
+    .pill{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+    }
+    .pill:hover{ background: rgba(255,255,255,.10); }
+    .pill:active{ transform: translateY(1px); }
+
+    .nav{
+      display:flex; flex-direction:column; gap:6px;
+      padding: 8px 6px 10px 6px;
+      overflow:auto; min-height:0;
+    }
+    .navBtn{
+      display:flex; align-items:center; justify-content:space-between;
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      cursor:pointer;
+      text-align:left;
+    }
+    .navBtn:hover{ background: rgba(255,255,255,.07); }
+    .navBtn.active{
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.14);
+    }
+    .navLeft{ display:flex; align-items:center; gap:10px; }
+    .icon{
+      width:22px; height:22px; border-radius: 8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 12px;
+      color: rgba(255,255,255,.88);
+    }
+    .navTitle{ font-size: 13px; }
+    .badge{
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.84);
+      white-space: nowrap;
+    }
+
+    .sidebarFooter{
+      margin-top:auto;
+      padding: 10px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .tiny{ font-size:12px; color: var(--muted2); }
+
+    .switch{
+      display:flex; gap:6px; align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      cursor:pointer;
+      user-select:none;
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+    }
+
+    /* Main */
+    .main{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-height:0;
+    }
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 14px;
+    }
+    .topbar h2{ margin:0; font-size: 16px; letter-spacing:.2px; }
+    .topbar .sub{
+      margin-top:4px;
+      font-size: 12px;
+      color: var(--muted2);
+      line-height: 1.45;
+      max-width: 860px;
+    }
+    .actions{
+      display:flex; gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      user-select:none;
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: rgba(170,220,255,.14);
+      border-color: rgba(170,220,255,.22);
+    }
+
+    .content{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:14px;
+      min-height:0;
+      overflow:hidden;
+    }
+    @media (max-width: 1100px){
+      .content{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      min-height:0;
+      overflow:hidden;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 1100px){
+      .cards{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 540px){
+      .cards{ grid-template-columns: 1fr; }
+    }
+
+    .kpi{
+      padding:12px;
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.07);
+      min-height: 84px;
+    }
+    .kpi .label{ font-size: 12px; color: var(--muted2); }
+    .kpi .value{ font-size: 20px; margin-top: 6px; letter-spacing:.2px; }
+    .kpi .hint{ font-size: 12px; color: var(--muted2); margin-top: 6px; line-height:1.35; }
+    .dot{
+      display:inline-block; width:8px; height:8px; border-radius: 99px;
+      margin-right: 8px; transform: translateY(1px);
+      background: rgba(255,255,255,.35);
+    }
+
+    .tableWrap{
+      overflow:auto;
+      min-height:0;
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 760px;
+    }
+    th,td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align:left;
+      vertical-align: middle;
+    }
+    th{
+      position: sticky; top:0;
+      background: rgba(10,16,30,.78);
+      backdrop-filter: blur(12px);
+      z-index: 5;
+      font-size: 12px;
+      color: rgba(255,255,255,.76);
+      letter-spacing:.2px;
+    }
+    tr:hover td{ background: rgba(255,255,255,.05); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; color: rgba(255,255,255,.84); }
+    .muted{ color: var(--muted2); }
+
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      white-space: nowrap;
+    }
+    .tag .s{ width:8px; height:8px; border-radius: 99px; background: rgba(255,255,255,.25); }
+    .tag.good .s{ background: var(--good); }
+    .tag.warn .s{ background: var(--warn); }
+    .tag.bad  .s{ background: var(--bad); }
+
+    .rightPanel{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      min-height:0;
+      overflow:hidden;
+    }
+    .sectionTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding: 8px 8px 0 8px;
+    }
+    .sectionTitle h3{ margin:0; font-size: 13px; letter-spacing:.2px; color: rgba(255,255,255,.88); }
+    .sectionTitle .meta{ font-size: 12px; color: var(--muted2); }
+
+    .detail{
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+      min-height: 180px;
+    }
+    .detail h4{ margin:0 0 8px 0; font-size: 14px; }
+    .detail p{ margin: 6px 0; color: rgba(255,255,255,.78); font-size: 12px; line-height:1.5; }
+    .row{ display:flex; flex-wrap:wrap; gap:10px; margin-top: 8px; }
+    .chip{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip:hover{ background: rgba(255,255,255,.08); }
+
+    .form{
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+    }
+    label{
+      display:block;
+      font-size: 12px;
+      color: rgba(255,255,255,.76);
+      margin-bottom: 6px;
+    }
+    .field{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: rgba(255,255,255,.92);
+      outline:none;
+      width: 100%;
+    }
+    .field:focus{ box-shadow: var(--focus); border-color: rgba(170,220,255,.28); }
+
+    /* Improve dropdown readability across browsers */
+    select.field{ color: rgba(255,255,255,.92); }
+    select.field option{
+      color: #0a101e;
+      background: #ffffff;
+    }
+    /* Dark mode option fallback (some browsers ignore option styles; still helps in many) */
+    body:not(.lightMode) select.field option{
+      color: rgba(255,255,255,.92);
+      background: #0b1220;
+    }
+    
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 540px){ .grid2{ grid-template-columns: 1fr; } table{ min-width: 720px; } }
+
+    .sliderRow{ display:flex; align-items:center; gap:10px; }
+    input[type="range"]{ width:100%; }
+    .num{
+      min-width: 110px;
+      text-align:right;
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .note{
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .toast{
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(10,16,30,.72);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.42);
+      color: rgba(255,255,255,.90);
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .22s ease;
+      pointer-events: none;
+      max-width: min(560px, calc(100vw - 28px));
+    }
+    .toast.show{ opacity: 1; transform: translateY(0); }
+
+    /* Light mode */
+    .lightMode{
+      --card: rgba(255,255,255,.55);
+      --stroke: rgba(255,255,255,.45);
+      --text: rgba(10,16,30,.92);
+      --muted: rgba(10,16,30,.68);
+      --muted2: rgba(10,16,30,.55);
+      --shadow: 0 20px 60px rgba(0,0,0,.18);
+      --link: rgba(0,80,190,.85);
+    }
+    .lightMode{
+      background:
+        radial-gradient(1200px 700px at 15% 20%, rgba(120,170,255,.30), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(255,120,210,.20), transparent 60%),
+        radial-gradient(900px 700px at 55% 85%, rgba(0,255,180,.16), transparent 55%),
+        linear-gradient(180deg, #f2f6ff 0%, #e9f0ff 55%, #f4f7ff 100%);
+      color: rgba(10,16,30,.92);
+    }
+  
+    /* Light mode dropdown text */
+    body.lightMode select.field{ color: rgba(10,16,30,.92); }
+    body.lightMode select.field option{ color: rgba(10,16,30,.92); background:#ffffff; }
+</style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar glass" id="sidebar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>华住会 · 智慧酒店 IoT</h1>
+          <p>准交付级 Demo · 门锁 / 空调 / 灯光 / 洗衣 · 告警 / 工单 / ROI</p>
+        </div>
+      </div>
+
+      <div class="search">
+        <input id="globalSearch" class="input" placeholder="搜索：酒店/房号/设备ID/工单/告警…" />
+        <div class="pill" id="btnRefresh" title="刷新模拟数据">刷新</div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="navBtn active" data-view="fleet">
+          <span class="navLeft"><span class="icon">🌐</span><span class="navTitle">资产总览</span></span>
+          <span class="badge" id="badgeHotels">—</span>
+        </button>
+        <button class="navBtn" data-view="devices">
+          <span class="navLeft"><span class="icon">🏨</span><span class="navTitle">设备中心</span></span>
+          <span class="badge" id="badgeDevices">—</span>
+        </button>
+        <button class="navBtn" data-view="scenes">
+          <span class="navLeft"><span class="icon">🎬</span><span class="navTitle">场景联动</span></span>
+          <span class="badge">可交互</span>
+        </button>
+        <button class="navBtn" data-view="alerts">
+          <span class="navLeft"><span class="icon">🔔</span><span class="navTitle">告警中心</span></span>
+          <span class="badge" id="badgeAlerts">—</span>
+        </button>
+        <button class="navBtn" data-view="workorders">
+          <span class="navLeft"><span class="icon">🧰</span><span class="navTitle">工单</span></span>
+          <span class="badge" id="badgeWO">—</span>
+        </button>
+        
+        <button class="navBtn" data-view="premium">
+          <span class="navLeft"><span class="icon">✨</span><span class="navTitle">高端能力</span></span>
+          <span class="badge" id="badgePremium">需审批</span>
+        </button>
+
+        
+        <button class="navBtn" data-view="member">
+          <span class="navLeft"><span class="icon">👤</span><span class="navTitle">华住会会员</span></span>
+          <span class="badge" id="badgeMember">增长</span>
+        </button>
+
+        <button class="navBtn" data-view="roi">
+          <span class="navLeft"><span class="icon">📈</span><span class="navTitle">加盟 ROI</span></span>
+          <span class="badge">可交互</span>
+        </button>
+      </nav>
+
+      <div class="sidebarFooter">
+        <div>
+          <div class="tiny">环境：演示沙箱</div>
+          <div class="tiny">角色：IoT 产品经理 · 运营视角</div>
+        </div>
+        <div class="switch" id="toggleTheme" title="切换主题">
+          <span>主题</span><span class="badge" id="themeBadge">暗</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main glass" id="main">
+      <header class="topbar">
+        <div>
+          <h2 id="viewTitle">资产总览</h2>
+          <div class="sub" id="viewSubtitle">
+            统一看板聚合各酒店 IoT 覆盖率、在线率与关键告警。点击表格行可在右侧查看酒店/房间级明细并触发“派单/联动”动作。
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnExport">导出视图</button>
+          <button class="btn primary" id="btnQuickAction">一键处置</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="panel" id="leftPanel">
+          <div class="cards" id="kpiCards"></div>
+          <div class="tableWrap" id="tableWrap">
+            <table id="table">
+              <thead id="thead"></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rightPanel" id="rightPanel">
+          <div class="sectionTitle">
+            <h3>详情面板</h3>
+            <div class="meta" id="detailMeta">未选择</div>
+          </div>
+
+          <div class="detail" id="detail">
+            <h4>请选择一条记录</h4>
+            <p>左侧点击酒店 / 设备 / 告警 / 工单，将在这里显示建议、SOP 与快捷动作。</p>
+            <div class="row">
+              <span class="chip">一键派单</span>
+              <span class="chip">触发场景</span>
+              <span class="chip">查看历史</span>
+            </div>
+          </div>
+
+          <!-- common filters -->
+          <div class="form" id="contextForm">
+            <div class="grid2">
+              <div>
+                <label>过滤：品牌</label>
+                <select id="filterBrand" class="field">
+                  <option value="ALL">全部</option>
+                  <option value="全季">全季</option>
+                  <option value="桔子">桔子</option>
+                  <option value="花间堂">花间堂</option>
+                  <option value="喜悦">喜悦</option>
+                  <option value="汉庭">汉庭</option>
+                  <option value="你好">你好</option>
+                </select>
+              </div>
+              <div>
+                <label>高端能力开通</label>
+                <select id="filterPremium" class="field">
+                  <option value="ALL">全部</option>
+                  <option value="ON">已开通</option>
+                  <option value="OFF">未开通</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid2" style="margin-top:10px;">
+              <div class="grid2">
+              <div>
+                <label>过滤：酒店</label>
+                <select id="filterHotel" class="field">
+                  <option value="ALL">全部</option>
+                </select>
+              </div>
+              <div>
+                <label>过滤：设备品类</label>
+                <select id="filterCategory" class="field">
+                  <option value="ALL">全部</option>
+                  <option value="LOCK">智能门锁</option>
+                  <option value="HVAC">空调</option>
+                  <option value="LIGHT">灯光</option>
+                  <option value="LAUNDRY">洗衣机</option>
+                  <option value="GATEWAY">网关</option>
+                </select>
+              </div>
+            </div>
+            <div class="note" id="contextNote">
+              提示：在真实系统中，这里通常还会叠加“品牌/门店类型/加盟商/区域/固件版本/供应商”等运营维度，用于规模化治理。
+            </div>
+          </div>
+
+          <!-- scenes -->
+          <div class="form" id="sceneForm" style="display:none;">
+            <div class="grid2">
+              <div>
+                <label>场景模板</label>
+                <select id="sceneTemplate" class="field">
+                  <option value="checkin">入住欢迎（门锁+灯光+空调）</option>
+                  <option value="checkout">退房节能（灯光+空调）</option>
+                  <option value="dnd">免打扰（门铃/走廊灯）</option>
+                  <option value="night">夜间关怀（灯光低亮+空调静音）</option>
+                  <option value="laundry">自助洗衣（排队+告警）</option>
+                </select>
+              </div>
+              <div>
+                <label>目标房间</label>
+                <select id="sceneRoom" class="field"></select>
+              </div>
+            </div>
+            <div class="grid2" style="margin-top:10px;">
+              <div>
+                <label>空调设定（°C）</label>
+                <div class="sliderRow">
+                  <input id="sceneTemp" type="range" min="16" max="30" value="24" />
+                  <div class="num" id="sceneTempVal">24</div>
+                </div>
+              </div>
+              <div>
+                <label>灯光亮度（%）</label>
+                <div class="sliderRow">
+                  <input id="sceneLight" type="range" min="0" max="100" value="65" />
+                  <div class="num" id="sceneLightVal">65</div>
+                </div>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <span class="chip" id="scenePreview">预览联动效果</span>
+              <span class="chip" id="sceneExecute">执行场景</span>
+              <span class="chip" id="sceneExport">导出配置</span>
+            </div>
+            <div class="note">场景价值：把“设备能力”封装成“可售卖的体验”。对加盟商而言，这就是可量化、可复制的运营 SOP。</div>
+          </div>
+
+          <!-- roi -->
+          <div class="form" id="roiForm" style="display:none;">
+            <div class="grid2">
+              <div>
+                <label>酒店规模（房间数）</label>
+                <div class="sliderRow">
+                  <input id="roiRooms" type="range" min="30" max="400" value="160" />
+                  <div class="num" id="roiRoomsVal">160</div>
+                </div>
+              </div>
+              <div>
+                <label>设备覆盖（每间）</label>
+                <select id="roiPack" class="field">
+                  <option value="basic">基础包：门锁+网关</option>
+                  <option value="std" selected>标准包：门锁+灯光+空调+网关</option>
+                  <option value="pro">旗舰包：标准包+洗衣联动+能耗策略</option>
+                </select>
+              </div>
+              <div>
+                <label>一次性硬件投入（元/房）</label>
+                <div class="sliderRow">
+                  <input id="roiCapex" type="range" min="200" max="2000" step="50" value="900" />
+                  <div class="num" id="roiCapexVal">900</div>
+                </div>
+              </div>
+              <div>
+                <label>平台服务费（元/房/月）</label>
+                <div class="sliderRow">
+                  <input id="roiSaaS" type="range" min="0" max="60" step="1" value="18" />
+                  <div class="num" id="roiSaaSVal">18</div>
+                </div>
+              </div>
+              <div>
+                <label>节省人力（人/100房）</label>
+                <div class="sliderRow">
+                  <input id="roiLaborSave" type="range" min="0" max="8" step="0.5" value="2.0" />
+                  <div class="num" id="roiLaborSaveVal">2.0</div>
+                </div>
+              </div>
+              <div>
+                <label>人力综合成本（元/人/月）</label>
+                <div class="sliderRow">
+                  <input id="roiLaborCost" type="range" min="5000" max="18000" step="500" value="9000" />
+                  <div class="num" id="roiLaborCostVal">9000</div>
+                </div>
+              </div>
+              <div>
+                <label>节能收益（元/房/月）</label>
+                <div class="sliderRow">
+                  <input id="roiEnergy" type="range" min="0" max="50" step="1" value="12" />
+                  <div class="num" id="roiEnergyVal">12</div>
+                </div>
+              </div>
+              <div>
+                <label>运维成本（元/房/月）</label>
+                <div class="sliderRow">
+                  <input id="roiOpex" type="range" min="0" max="20" step="1" value="3" />
+                  <div class="num" id="roiOpexVal">3</div>
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              ROI 口径：<span class="mono">人力节省 + 节能收益 - 平台费 - 运维成本</span> 为月净收益；CAPEX 为一次性投入。加盟商决策要点通常是“回本周期 + 可复制运营SOP + 住客体验口碑”。
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const nowTs = ()=> new Date().toISOString().replace("T"," ").slice(0,19);
+  const clamp = (n,a,b)=> Math.max(a, Math.min(b,n));
+  const rand = (a,b)=> a + Math.random()*(b-a);
+  const randInt = (a,b)=> Math.floor(rand(a,b+1));
+  const choice = (arr)=> arr[Math.floor(Math.random()*arr.length)];
+  const fmtMoney = (n)=> Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const escapeHTML = (s)=> String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  function toast(msg){
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=> el.classList.remove("show"), 1800);
+  }
+
+  const HOTELS = [
+    {code:"HZ-SH-HQ", name:"全季·上海虹桥枢纽店", city:"上海", brand:"全季"},
+    {code:"HZ-SH-PD", name:"汉庭·上海浦东机场店", city:"上海", brand:"汉庭"},
+    {code:"HZ-HZ-XH", name:"桔子·杭州西湖店", city:"杭州", brand:"桔子"},
+    {code:"HZ-NJ-XJ", name:"全季·南京新街口店", city:"南京", brand:"全季"},
+    {code:"HZ-CD-TF", name:"你好·成都天府广场店", city:"成都", brand:"你好"}
+  ];
+
+  const CATS = [
+    {k:"LOCK", name:"智能门锁"},
+    {k:"HVAC", name:"空调"},
+    {k:"LIGHT", name:"灯光"},
+    {k:"LAUNDRY", name:"洗衣机"},
+    {k:"GATEWAY", name:"网关"}
+  ];
+
+  const STATUS = ["ONLINE","OFFLINE","DEGRADED"];
+  const VENDORS = ["Aqara","Tuya","Kaadas","Philips","Midea","Gree","Haier","Huawei","Zigbee-GW","BLE-GW"];
+  const NET = ["Zigbee","BLE Mesh","Wi‑Fi","Modbus","MQTT"];
+  const ALERT_TYPES = [
+    "门锁电量低", "门锁离线", "空调通讯异常", "灯光回路故障", "洗衣机占用异常", "网关离线", "固件版本落后", "能耗异常（夜间未关机）"
+  ];
+  const SEV = ["P1","P2","P3"];
+  const WO_TYPES = ["远程诊断","现场巡检","更换电池","更换网关","固件升级","参数校准","能耗策略下发"];
+
+  function tagStatus(st){
+    if(st==="ONLINE") return `<span class="tag good"><span class="s"></span>在线</span>`;
+    if(st==="OFFLINE") return `<span class="tag bad"><span class="s"></span>离线</span>`;
+    return `<span class="tag warn"><span class="s"></span>降级</span>`;
+  }
+  function tagSev(s){
+    if(s==="P1") return `<span class="tag bad"><span class="s"></span>P1</span>`;
+    if(s==="P2") return `<span class="tag warn"><span class="s"></span>P2</span>`;
+    return `<span class="tag"><span class="s"></span>P3</span>`;
+  }
+  function tagCat(k){
+    const m = {LOCK:"门锁",HVAC:"空调",LIGHT:"灯光",LAUNDRY:"洗衣",GATEWAY:"网关"};
+    return `<span class="tag"><span class="s"></span>${m[k]||k}</span>`;
+  }
+  function tagWO(st){
+    if(st==="NEW") return `<span class="tag warn"><span class="s"></span>新建</span>`;
+    if(st==="IN_PROGRESS") return `<span class="tag good"><span class="s"></span>处理中</span>`;
+    if(st==="WAITING") return `<span class="tag warn"><span class="s"></span>等待中</span>`;
+    return `<span class="tag"><span class="s"></span>已完成</span>`;
+  }
+
+  function genRooms(hotel, roomsCount){
+    const out = [];
+    for(let i=1;i<=roomsCount;i++){
+      const floor = Math.floor((i-1)/20)+3;
+      const num = String(i%100).padStart(2,"0");
+      out.push({hotelCode:hotel.code, hotelName:hotel.name, room:`${floor}${num}`});
+    }
+    return out;
+  }
+
+  function genDevices(){
+    const out = [];
+    const hotelRooms = new Map();
+    HOTELS.forEach(h=>{
+      const rc = randInt(80, 220);
+      hotelRooms.set(h.code, genRooms(h, rc));
+    });
+
+    let seq = 10000;
+
+    for(const h of HOTELS){
+      const rooms = hotelRooms.get(h.code);
+      // gateway per 12 rooms approx
+      const gwCount = Math.max(6, Math.round(rooms.length/12));
+      for(let g=0; g<gwCount; g++){
+        const st = choice(STATUS);
+        out.push({
+          id: `DEV-${seq++}`,
+          hotelCode: h.code,
+          hotel: h.name,
+          brand: h.brand,
+          city: h.city,
+          room: `机房/弱电间-${randInt(1,6)}`,
+          category: "GATEWAY",
+          vendor: choice(VENDORS.filter(v=>v.includes("GW")||v.includes("Huawei")||v.includes("Tuya")||v.includes("Zigbee"))),
+          protocol: choice(["MQTT","Zigbee","BLE Mesh"]),
+          status: st,
+          health: clamp(Math.round(60 + rand(0,40) - (st==="DEGRADED"?20:0) - (st==="OFFLINE"?35:0)), 0, 100),
+          battery: null,
+          firmware: choice(["v1.2.1","v1.2.3","v1.3.0","v1.3.2"]),
+          lastSeen: st==="OFFLINE" ? `${randInt(20,240)} 分钟前` : `${randInt(1,12)} 分钟前`,
+          notes: choice([
+            "建议检查上联交换机端口与PoE供电。",
+            "建议开启离线缓存与重连策略。",
+            "建议统一固件版本，降低门店运维复杂度。",
+            "建议将异常能耗策略默认下发到夜间时段。"
+          ])
+        });
+      }
+
+      // per room: lock + hvac + light, laundry in shared area
+      rooms.forEach(r=>{
+        const lockSt = choice(STATUS);
+        const hvacSt = choice(STATUS);
+        const lightSt = choice(STATUS);
+
+        out.push({
+          id: `DEV-${seq++}`,
+          hotelCode: h.code, hotel: h.name, brand: h.brand, city: h.city,
+          room: r.room,
+          category: "LOCK",
+          vendor: choice(["Kaadas","Aqara","Tuya"]),
+          protocol: choice(["BLE","Zigbee"]),
+          status: lockSt,
+          health: clamp(Math.round(65 + rand(0,35) - (lockSt==="DEGRADED"?18:0) - (lockSt==="OFFLINE"?35:0)), 0, 100),
+          battery: clamp(Math.round(25 + rand(0,75) - (lockSt==="OFFLINE"?10:0)), 0, 100),
+          firmware: choice(["v3.6.1","v3.6.3","v3.7.0","v3.7.2"]),
+          lastSeen: lockSt==="OFFLINE" ? `${randInt(30,360)} 分钟前` : `${randInt(1,15)} 分钟前`,
+          notes: choice([
+            "可联动 PMS：入住→下发电子钥匙；退房→回收权限。",
+            "建议设置低电量阈值与提前派单更换电池。",
+            "建议启用“异常开门”审计与黑名单策略。"
+          ])
+        });
+
+        out.push({
+          id: `DEV-${seq++}`,
+          hotelCode: h.code, hotel: h.name, brand: h.brand, city: h.city,
+          room: r.room,
+          category: "HVAC",
+          vendor: choice(["Midea","Gree","Haier","Tuya"]),
+          protocol: choice(["Modbus","Wi‑Fi","MQTT"]),
+          status: hvacSt,
+          health: clamp(Math.round(60 + rand(0,40) - (hvacSt==="DEGRADED"?22:0) - (hvacSt==="OFFLINE"?35:0)), 0, 100),
+          battery: null,
+          firmware: choice(["v2.1.0","v2.1.4","v2.2.0","v2.2.3"]),
+          lastSeen: hvacSt==="OFFLINE" ? `${randInt(10,180)} 分钟前` : `${randInt(1,10)} 分钟前`,
+          notes: choice([
+            "建议绑定入住态：无人→节能模式；有人→舒适模式。",
+            "建议统一温度上限，降低能耗与投诉风险。",
+            "建议将空调离线与能耗异常自动转工单。"
+          ])
+        });
+
+        out.push({
+          id: `DEV-${seq++}`,
+          hotelCode: h.code, hotel: h.name, brand: h.brand, city: h.city,
+          room: r.room,
+          category: "LIGHT",
+          vendor: choice(["Philips","Aqara","Tuya"]),
+          protocol: choice(["Zigbee","BLE Mesh"]),
+          status: lightSt,
+          health: clamp(Math.round(70 + rand(0,30) - (lightSt==="DEGRADED"?16:0) - (lightSt==="OFFLINE"?35:0)), 0, 100),
+          battery: null,
+          firmware: choice(["v1.0.8","v1.1.0","v1.1.3","v1.2.0"]),
+          lastSeen: lightSt==="OFFLINE" ? `${randInt(10,240)} 分钟前` : `${randInt(1,12)} 分钟前`,
+          notes: choice([
+            "建议配置“夜间关怀”与“起夜低亮”场景。",
+            "建议将回路故障与频闪自动派单给工程部。",
+            "建议与门磁联动，提升住客体验。"
+          ])
+        });
+      });
+
+      // laundry shared: 8-16 units
+      const laundryCount = randInt(8,16);
+      for(let i=0;i<laundryCount;i++){
+        const st = choice(STATUS);
+        out.push({
+          id: `DEV-${seq++}`,
+          hotelCode: h.code, hotel: h.name, brand: h.brand, city: h.city,
+          room: `公共洗衣房-${randInt(1,2)}`,
+          category: "LAUNDRY",
+          vendor: choice(["Haier","Midea","Tuya"]),
+          protocol: choice(["Wi‑Fi","MQTT"]),
+          status: st,
+          health: clamp(Math.round(55 + rand(0,45) - (st==="DEGRADED"?20:0) - (st==="OFFLINE"?35:0)), 0, 100),
+          battery: null,
+          firmware: choice(["v4.0.1","v4.0.3","v4.1.0"]),
+          lastSeen: st==="OFFLINE" ? `${randInt(5,120)} 分钟前` : `${randInt(1,8)} 分钟前`,
+          notes: choice([
+            "建议开放扫码预约与排队提示，减少前台咨询。",
+            "建议联动故障告警→自动退款/补偿券策略（需业务确认）。",
+            "建议统计峰值使用率，指导设备增配与能耗治理。"
+          ])
+        });
+      }
+    }
+
+    return out;
+  }
+
+  function genHotelFleet(devices){
+    const byHotel = new Map();
+    devices.forEach(d=>{
+      const key = d.hotelCode;
+      if(!byHotel.has(key)){
+        const h = HOTELS.find(x=>x.code===key);
+        byHotel.set(key, {
+          hotelCode: key,
+          hotel: h.name,
+          brand: h.brand,
+          city: h.city,
+          devices: 0, online: 0, offline: 0, degraded: 0,
+          coverage: 0,
+          alertsOpen: 0,
+          energyRisk: 0
+        });
+      }
+      const row = byHotel.get(key);
+      row.devices += 1;
+      if(d.status==="ONLINE") row.online += 1;
+      if(d.status==="OFFLINE") row.offline += 1;
+      if(d.status==="DEGRADED") row.degraded += 1;
+    });
+
+    // mock coverage + open alerts + energy risk
+    for(const row of byHotel.values()){
+      row.coverage = clamp(Math.round(78 + rand(0,20) - (row.offline>30?8:0)), 40, 99);
+      row.alertsOpen = clamp(Math.round(6 + rand(0,18) + (row.offline>25?8:0)), 0, 60);
+      row.energyRisk = clamp(Math.round(3 + rand(0,18) + (row.coverage>90? -2:2)), 0, 40);
+    }
+    return Array.from(byHotel.values());
+  }
+
+  function genAlerts(devices){
+    const n = randInt(26, 55);
+    const out = [];
+    for(let i=0;i<n;i++){
+      const d = choice(devices);
+      const type = choice(ALERT_TYPES);
+      const sev = choice(SEV);
+      const ageMin = randInt(1, 360);
+      const st = choice(["OPEN","ACK","CLOSED"]);
+      const msg = (function(){
+        if(type==="门锁电量低") return "电量低于阈值，建议集中派单更换电池，避免凌晨投诉。";
+        if(type==="门锁离线") return "门锁心跳丢失，建议检查网关信号与门禁线路。";
+        if(type==="空调通讯异常") return "通讯超时，建议复核协议网关/地址码/现场电控。";
+        if(type==="灯光回路故障") return "疑似回路异常或驱动故障，建议工程部现场排查。";
+        if(type==="洗衣机占用异常") return "占用时间异常偏长，建议复核传感器状态与计费逻辑。";
+        if(type==="网关离线") return "网关离线影响整层设备，建议优先恢复网络与供电。";
+        if(type==="固件版本落后") return "固件落后存在兼容风险，建议安排低峰时段升级窗口。";
+        return "夜间能耗异常，建议启用退房节能/无人关机策略。";
+      })();
+
+      out.push({
+        id: "ALT-" + (9000+i),
+        hotelCode: d.hotelCode,
+        hotel: d.hotel,
+        room: d.room,
+        deviceId: d.id,
+        category: d.category,
+        type, sev,
+        status: st,
+        created: `${ageMin} 分钟前`,
+        msg
+      });
+    }
+    const sevRank = {P1:1,P2:2,P3:3};
+    out.sort((a,b)=> sevRank[a.sev]-sevRank[b.sev]);
+    return out;
+  }
+
+  function genWorkOrders(alerts){
+    const out = [];
+    const m = randInt(18, 36);
+    for(let i=0;i<m;i++){
+      const a = choice(alerts);
+      const type = choice(WO_TYPES);
+      const state = choice(["NEW","IN_PROGRESS","WAITING","DONE"]);
+      const ageH = randInt(1, 96);
+      out.push({
+        id: "WO-" + (7000+i),
+        hotelCode: a.hotelCode,
+        hotel: a.hotel,
+        room: a.room,
+        deviceId: a.deviceId,
+        category: a.category,
+        priority: choice(["P1","P2","P3"]),
+        state,
+        owner: choice(["工程部","值班经理","供应商驻场","远程支持"]),
+        sla: choice(["2h","4h","8h","24h","48h"]),
+        updated: `${ageH} 小时前`,
+        title: `${type} · ${a.type}`,
+        desc: `关联告警 ${a.id}（${a.type}/${a.sev}）。建议按酒店SOP执行：远程诊断→现场处置→回写结果→关闭告警。`
+      });
+    }
+    return out;
+  }
+
+  let state = {
+    view: "fleet",
+    theme: "dark",
+    q: "",
+    filterBrand: "ALL",
+    filterPremium: "ALL",
+    filterHotel: "ALL",
+    filterCategory: "ALL",
+    selected: null,
+    devices: [],
+    fleet: [],
+    alerts: [],
+    workorders: [],
+    premiumByHotel: {} // {hotelCode:{sleep:boolean, ar:boolean}}
+  };
+
+  const VIEW_META = {
+    fleet: {
+      title: "资产总览",
+      subtitle: "统一看板聚合各酒店 IoT 覆盖率、在线率与关键告警。点击行可看酒店级明细，并触发派单与治理动作（模拟）。",
+      columns: [
+        {key:"hotel", label:"酒店", render:(r)=> `<span>${escapeHTML(r.hotel)}</span><div class="muted" style="font-size:12px;margin-top:2px;">${escapeHTML(r.city)} · ${escapeHTML(r.brand)} · ${escapeHTML(r.hotelCode)}</div>`},
+        {key:"coverage", label:"覆盖率", render:(r)=> `<span class="mono">${r.coverage}%</span>`},
+        {key:"online", label:"在线设备", render:(r)=> `<span class="mono">${r.online}</span>`},
+        {key:"offline", label:"离线", render:(r)=> `<span class="mono">${r.offline}</span>`},
+        {key:"degraded", label:"降级", render:(r)=> `<span class="mono">${r.degraded}</span>`},
+        {key:"alertsOpen", label:"未闭环告警", render:(r)=> `<span class="mono">${r.alertsOpen}</span>`},
+        {key:"energyRisk", label:"能耗风险", render:(r)=> `<span class="mono">${r.energyRisk}</span>`}
+      ],
+      kpis: (rows)=>{
+        const hotels = rows.length;
+        const cov = rows.length? rows.reduce((s,r)=>s+r.coverage,0)/rows.length : 0;
+        const online = rows.reduce((s,r)=>s+r.online,0);
+        const offline = rows.reduce((s,r)=>s+r.offline,0);
+        const openAlerts = rows.reduce((s,r)=>s+r.alertsOpen,0);
+        return [
+          {label:"酒店数", value: hotels, hint:"按品牌/区域可继续拆分", dot:""},
+          {label:"平均覆盖率", value: Math.round(cov) + "%", hint:"设备上云与联动能力的基础", dot:"good"},
+          {label:"离线设备", value: offline, hint:"影响体验与SOP执行，建议先治理网络/网关", dot:"bad"},
+          {label:"未闭环告警", value: openAlerts, hint:"核心考核：告警→工单→回写闭环", dot:"warn"}
+        ];
+      }
+    },
+    devices: {
+      title: "设备中心",
+      subtitle: "按酒店/房间/品类管理智能门锁、空调、灯光、洗衣与网关。点击设备查看右侧详情并可触发“派单/固件升级/执行场景”。",
+      columns: [
+        {key:"id", label:"设备ID", render:(r)=> `<span class="mono">${r.id}</span>`},
+        {key:"hotel", label:"酒店"},
+        {key:"room", label:"房间/区域", render:(r)=> `<span class="mono">${escapeHTML(r.room)}</span>`},
+        {key:"category", label:"品类", render:(r)=> tagCat(r.category)},
+        {key:"status", label:"状态", render:(r)=> tagStatus(r.status)},
+        {key:"health", label:"健康度", render:(r)=> `<span class="mono">${r.health}</span>`},
+        {key:"battery", label:"电量", render:(r)=> r.battery===null ? "<span class='muted'>—</span>" : `<span class="mono">${r.battery}%</span>`},
+        {key:"protocol", label:"协议", render:(r)=> `<span class="mono">${escapeHTML(r.protocol)}</span>`},
+        {key:"firmware", label:"固件", render:(r)=> `<span class="mono">${escapeHTML(r.firmware)}</span>`},
+        {key:"lastSeen", label:"最近心跳"}
+      ],
+      kpis: (rows)=>{
+        const online = rows.filter(r=>r.status==="ONLINE").length;
+        const off = rows.filter(r=>r.status==="OFFLINE").length;
+        const deg = rows.filter(r=>r.status==="DEGRADED").length;
+        const avgHealth = rows.length? rows.reduce((s,r)=>s+r.health,0)/rows.length:0;
+        return [
+          {label:"在线设备", value: online, hint:"保障客房体验与运营SOP", dot:"good"},
+          {label:"离线设备", value: off, hint:"优先排查网关/网络/供电", dot:"bad"},
+          {label:"降级运行", value: deg, hint:"参数/信号/兼容问题", dot:"warn"},
+          {label:"平均健康度", value: Math.round(avgHealth), hint:"用于门店治理评分", dot:""}
+        ];
+      }
+    },
+    scenes: {
+      title: "场景联动",
+      subtitle: "把“设备”升级为“体验”：入住欢迎、退房节能、免打扰、夜间关怀、自助洗衣。此处演示场景模板+参数化配置+执行与导出。",
+      columns: [],
+      kpis: ()=>[]
+    },
+    alerts: {
+      title: "告警中心",
+      subtitle: "统一聚合门锁/空调/灯光/洗衣/网关告警，支持确认（ACK）、生成工单、闭环回写。建议与门店考核绑定形成可持续治理机制。",
+      columns: [
+        {key:"id", label:"告警ID", render:(r)=> `<span class="mono">${r.id}</span>`},
+        {key:"sev", label:"等级", render:(r)=> tagSev(r.sev)},
+        {key:"hotel", label:"酒店"},
+        {key:"room", label:"房间/区域", render:(r)=> `<span class="mono">${escapeHTML(r.room)}</span>`},
+        {key:"category", label:"品类", render:(r)=> tagCat(r.category)},
+        {key:"type", label:"类型"},
+        {key:"deviceId", label:"设备ID", render:(r)=> `<span class="mono">${r.deviceId}</span>`},
+        {key:"status", label:"状态", render:(r)=> alertStatusTag(r.status)},
+        {key:"created", label:"发生时间"},
+        {key:"msg", label:"摘要", render:(r)=> `<span class="muted">${escapeHTML(r.msg)}</span>`}
+      ],
+      kpis: (rows)=>{
+        const open = rows.filter(r=>r.status==="OPEN").length;
+        const ack = rows.filter(r=>r.status==="ACK").length;
+        const p1 = rows.filter(r=>r.sev==="P1" && r.status!=="CLOSED").length;
+        const byType = {};
+        rows.forEach(r=> byType[r.type]=(byType[r.type]||0)+1 );
+        const top = Object.entries(byType).sort((a,b)=>b[1]-a[1])[0];
+        return [
+          {label:"未处理（OPEN）", value: open, hint:"值班侧优先拉齐", dot:"bad"},
+          {label:"已确认（ACK）", value: ack, hint:"确认后进入处置/转工单", dot:"warn"},
+          {label:"高优（P1）", value: p1, hint:"建议默认转工单并升级SLA", dot:"bad"},
+          {label:"Top 告警类型", value: top? top[0]:"—", hint: top? `出现 ${top[1]} 次`:"暂无", dot:""}
+        ];
+      }
+    },
+    workorders: {
+      title: "工单",
+      subtitle: "工单是酒店 IoT 运营的闭环载体：SLA、责任人、过程与结果回写。支持从告警/设备一键生成，形成可审计的运维链路。",
+      columns: [
+        {key:"id", label:"工单ID", render:(r)=> `<span class="mono">${r.id}</span>`},
+        {key:"priority", label:"优先级", render:(r)=> tagSev(r.priority)},
+        {key:"state", label:"状态", render:(r)=> tagWO(r.state)},
+        {key:"hotel", label:"酒店"},
+        {key:"room", label:"房间/区域", render:(r)=> `<span class="mono">${escapeHTML(r.room)}</span>`},
+        {key:"category", label:"品类", render:(r)=> tagCat(r.category)},
+        {key:"title", label:"标题"},
+        {key:"owner", label:"负责人"},
+        {key:"sla", label:"SLA", render:(r)=> `<span class="mono">${escapeHTML(r.sla)}</span>`},
+        {key:"updated", label:"最近更新"}
+      ],
+      kpis: (rows)=>{
+        const n = rows.filter(r=>r.state==="NEW").length;
+        const ip = rows.filter(r=>r.state==="IN_PROGRESS").length;
+        const w = rows.filter(r=>r.state==="WAITING").length;
+        const d = rows.filter(r=>r.state==="DONE").length;
+        return [
+          {label:"新建", value: n, hint:"等待受理/分派", dot:"warn"},
+          {label:"处理中", value: ip, hint:"工程与供应商协同", dot:"good"},
+          {label:"等待中", value: w, hint:"备件/权限/到店时窗", dot:"warn"},
+          {label:"已完成", value: d, hint:"闭环回写才有运营价值", dot:"good"}
+        ];
+      }
+    },
+
+    premium: {
+      title: "高端能力",
+      subtitle: "仅高端与试点门店可申请：智能睡眠监测系统、AR 眼镜系统。需总部审批后开通；开通后，模块能力与运营指标才会出现在门店界面与治理报表中。",
+      columns: [
+        {key:"hotel", label:"酒店", render:(r)=> `<span>${escapeHTML(r.hotel)}</span><div class="muted" style="font-size:12px;margin-top:2px;">${escapeHTML(r.city)} · ${escapeHTML(r.brand)} · ${escapeHTML(r.hotelCode)}</div>`},
+        {key:"eligible", label:"是否可申请", render:(r)=> r.eligible ? `<span class="tag good"><span class="s"></span>可申请</span>` : `<span class="tag"><span class="s"></span>标准版</span>`},
+        {key:"sleep", label:"睡眠系统", render:(r)=> r.sleep ? `<span class="tag good"><span class="s"></span>已开通</span>` : `<span class="tag warn"><span class="s"></span>未开通</span>`},
+        {key:"ar", label:"AR 眼镜", render:(r)=> r.ar ? `<span class="tag good"><span class="s"></span>已开通</span>` : `<span class="tag warn"><span class="s"></span>未开通</span>`},
+        {key:"govern", label:"治理建议", render:(r)=> `<span class="muted">${escapeHTML(r.govern)}</span>`}
+      ],
+      kpis: (rows)=>{
+        const eligible = rows.filter(r=>r.eligible).length;
+        const sleepOn = rows.filter(r=>r.sleep).length;
+        const arOn = rows.filter(r=>r.ar).length;
+        const both = rows.filter(r=>r.sleep && r.ar).length;
+        return [
+          {label:"可申请门店", value: eligible, hint:"花间堂/喜悦/高端试点", dot:"good"},
+          {label:"睡眠已开通", value: sleepOn, hint:"总部审批后才出现模块", dot:"warn"},
+          {label:"AR 已开通", value: arOn, hint:"工程效率与VIP体验双用", dot:"warn"},
+          {label:"双能力齐备", value: both, hint:"可形成高端体验飞轮", dot:"good"}
+        ];
+      }
+    },
+
+
+    member: {
+      title: "华住会会员（H Rewards）",
+      subtitle: "集团级忠诚体系与直订生态入口：会员等级、积分资产、权益策略、活动增长与门店体验联动。该页为演示口径，强调可运营、可计量、可闭环。",
+      columns: [
+        {key:"seg", label:"人群/等级", render:(r)=> `<span>${escapeHTML(r.seg)}</span><div class="muted" style="font-size:12px;margin-top:2px;">${escapeHTML(r.desc)}</div>`},
+        {key:"value", label:"核心权益/价值", render:(r)=> `<span class="muted">${escapeHTML(r.value)}</span>`},
+        {key:"kpi", label:"运营指标", render:(r)=> `<span class="mono">${escapeHTML(r.kpi)}</span>`},
+        {key:"next", label:"下一步动作", render:(r)=> `<span class="muted">${escapeHTML(r.next)}</span>`}
+      ],
+      kpis:(rows)=>{
+        const direct = 0.65; // demo: 直订占比
+        const act = 0.42;    // demo: 活跃率
+        const rep = 0.28;    // demo: 复购率
+        const nps = 53;      // demo: NPS
+        return [
+          {label:"直订占比", value: Math.round(direct*100) + "%", hint:"App/小程序/官网", dot:"good"},
+          {label:"月活跃率", value: Math.round(act*100) + "%", hint:"会员触达与转化", dot:"warn"},
+          {label:"复购率", value: Math.round(rep*100) + "%", hint:"跨品牌复住", dot:"good"},
+          {label:"会员 NPS", value: nps, hint:"服务一致性与体验", dot:"good"}
+        ];
+      }
+    },
+
+    roi: {
+      title: "加盟 ROI",
+      subtitle: "用加盟商能听懂的语言：一次性投入、每月净收益、回本周期与三年净收益。让“买设备”变成“买体验+买运营能力”。",
+      columns: [],
+      kpis: ()=>[]
+    }
+  };
+
+  function alertStatusTag(s){
+    if(s==="OPEN") return `<span class="tag bad"><span class="s"></span>未处理</span>`;
+    if(s==="ACK") return `<span class="tag warn"><span class="s"></span>已确认</span>`;
+    return `<span class="tag good"><span class="s"></span>已关闭</span>`;
+  }
+
+  function updateBadges(){
+    $("badgeHotels").textContent = state.fleet.length;
+    $("badgeDevices").textContent = state.devices.length;
+    $("badgeAlerts").textContent = state.alerts.filter(a=>a.status!=="CLOSED").length;
+    $("badgeWO").textContent = state.workorders.filter(w=>w.state!=="DONE").length;
+    $("badgePremium").textContent = "需审批";
+    const direct = 65;
+    if($("badgeMember")) $("badgeMember").textContent = direct + "%直订";
+  }
+
+  function populateFilters(){
+    // Brand / premium filters
+    if($("filterBrand")) $("filterBrand").value = state.filterBrand || "ALL";
+    if($("filterPremium")) $("filterPremium").value = state.filterPremium || "ALL";
+
+    const hotelSel = $("filterHotel");
+    hotelSel.innerHTML = `<option value="ALL">全部</option>` + HOTELS.map(h=>`<option value="${h.code}">${escapeHTML(h.name)}</option>`).join("");
+    hotelSel.value = state.filterHotel;
+
+    // Bind brand/premium filters
+    const fbSel = $("filterBrand");
+    const fpSel = $("filterPremium");
+    if(fbSel) fbSel.addEventListener("change", ()=>{ state.filterBrand = fbSel.value; render(); });
+    if(fpSel) fpSel.addEventListener("change", ()=>{ state.filterPremium = fpSel.value; render(); });
+
+    // scenes room list: default first hotel rooms from devices
+    const rooms = Array.from(new Set(state.devices.filter(d=>d.category!=="GATEWAY").map(d=>`${d.hotelCode}｜${d.room}`))).slice(0, 240).sort();
+    const roomSel = $("sceneRoom");
+    roomSel.innerHTML = rooms.map(x=>`<option value="${escapeHTML(x)}">${escapeHTML(x)}</option>`).join("");
+  }
+
+  function applyFilters(rows){
+    const q = state.q.trim().toLowerCase();
+    let out = rows;
+
+    const fb = $("filterBrand") ? $("filterBrand").value : (state.filterBrand||"ALL");
+    const fp = $("filterPremium") ? $("filterPremium").value : (state.filterPremium||"ALL");
+
+    if(fb !== "ALL"){
+      out = out.filter(r => (r.brand||"") === fb);
+    }
+
+    if(state.filterHotel !== "ALL"){
+      out = out.filter(r => (r.hotelCode||"") === state.filterHotel);
+    }
+
+    if(fp !== "ALL"){
+      out = out.filter(r=>{
+        const code = r.hotelCode || (r.hotelCode===0? "": "");
+        if(!code || !state.premiumByHotel) return (fp==="OFF"); // if unknown, treat as OFF
+        const p = state.premiumByHotel[code] || {sleep:false, ar:false};
+        const on = !!(p.sleep || p.ar);
+        return fp==="ON" ? on : !on;
+      });
+    }
+
+    if(state.filterCategory !== "ALL"){
+      // only applies when row has category
+      out = out.filter(r => (r.category||"") === state.filterCategory);
+    }
+
+    if(q){
+      out = out.filter(r => Object.values(r).join(" ").toLowerCase().includes(q));
+    }
+    return out;
+  }
+
+  const PREMIUM_BRANDS = new Set(["花间堂","喜悦"]);
+  function isPremiumEligibleBrand(brand){ return PREMIUM_BRANDS.has(brand); }
+
+  function currentRows(){
+
+
+    if(state.view==="member"){
+      const r = state.selected;
+      d.innerHTML = `
+        <h4>${escapeHTML(r.seg)}</h4>
+        <p class="muted">${escapeHTML(r.desc)}</p>
+        <hr style="border:0;border-top:1px solid rgba(255,255,255,.10);margin:12px 0;">
+        <p><span class="muted">核心权益/价值：</span>${escapeHTML(r.value)}</p>
+        <p><span class="muted">关键指标：</span><span class="mono">${escapeHTML(r.kpi)}</span></p>
+        <p><span class="muted">建议动作：</span>${escapeHTML(r.next)}</p>
+        <div class="row" style="margin-top:10px;">
+          <span class="chip" id="goDevices">联动 IoT 设备</span>
+          <span class="chip" id="goPremium">联动高端能力</span>
+          <span class="chip" id="copyOps">复制运营话术</span>
+        </div>
+        <p class="note">演示：将会员策略与门店能力（门锁/空调/洗衣/睡眠/AR）绑定，形成“可售卖权益包”和“可量化SLA”。</p>
+      `;
+      $("goDevices")?.addEventListener("click", ()=>{ state.view="devices"; render(); toast("已切换到设备中心"); });
+      $("goPremium")?.addEventListener("click", ()=>{ state.view="premium"; render(); toast("已切换到高端能力"); });
+      $("copyOps")?.addEventListener("click", async ()=>{
+        const txt = `我们把华住会会员权益做成“可交付服务能力”：通过门锁/空调/洗衣等 IoT 与工单SLA闭环，确保权益兑现；在花间堂/喜悦试点上线睡眠与AR能力，形成高端房型溢价与复购飞轮。`;
+        try{ await navigator.clipboard.writeText(txt); toast("已复制话术"); }catch(_){ toast("复制失败（权限限制）"); }
+      });
+      return;
+    }
+
+    if(state.view==="premium"){
+      const r = state.selected;
+      const eligible = !!r.eligible;
+      const p = state.premiumByHotel[r.hotelCode] || {sleep:false, ar:false};
+      const lockMsg = eligible ? "" : "（该门店为标准版，不支持申请）";
+      d.innerHTML = `
+        <h4>${escapeHTML(r.hotel)}</h4>
+        <p><span class="muted">品牌：</span><span class="mono">${escapeHTML(r.brand)}</span> <span class="muted">城市：</span><span class="mono">${escapeHTML(r.city)}</span></p>
+        <div class="row">
+          ${eligible ? `<span class="tag good"><span class="s"></span>可申请</span>` : `<span class="tag"><span class="s"></span>标准版</span>`}
+          ${p.sleep ? `<span class="tag good"><span class="s"></span>睡眠：已开通</span>` : `<span class="tag warn"><span class="s"></span>睡眠：未开通</span>`}
+          ${p.ar ? `<span class="tag good"><span class="s"></span>AR：已开通</span>` : `<span class="tag warn"><span class="s"></span>AR：未开通</span>`}
+        </div>
+        <p style="margin-top:10px;"><span class="muted">总部审批动作：</span>${escapeHTML(lockMsg)}</p>
+        <div class="row">
+          <span class="chip" id="approveSleep">${p.sleep ? "关闭睡眠系统" : "审批并开启睡眠系统"}</span>
+          <span class="chip" id="approveAR">${p.ar ? "关闭 AR 系统" : "审批并开启 AR 系统"}</span>
+          <span class="chip" id="goSleep">查看睡眠模块</span>
+          <span class="chip" id="goAR">查看 AR 模块</span>
+        </div>
+        <p class="note">审批开启后：门店端将出现对应模块，并纳入治理指标、审计日志与SLA体系（演示为即时生效）。</p>
+      `;
+
+      const toggle = (k)=>{
+        if(!eligible){ toast("标准版门店不支持高端能力"); return; }
+        state.premiumByHotel[r.hotelCode][k] = !state.premiumByHotel[r.hotelCode][k];
+        // rebuild premium rows and rerender table/detail
+        state.premiumRows = state.fleet.map(f=>{
+          const eligible2 = isPremiumEligibleBrand(f.brand);
+          const pp = state.premiumByHotel[f.hotelCode] || {sleep:false, ar:false};
+          return {
+            hotelCode: f.hotelCode, hotel: f.hotel, brand: f.brand, city: f.city,
+            eligible: eligible2,
+            sleep: !!pp.sleep, ar: !!pp.ar,
+            govern: eligible2
+              ? (pp.sleep||pp.ar ? "建议将高端能力绑定房型/权益，并纳入审计日志。" : "建议先试点 1-2 家门店，建立口径与SOP。")
+              : "标准版门店以稳定与降本为优先。"
+          };
+        });
+    // Build member view rows (demo)
+    state.memberRows = [
+      {seg:"星会员（入门）", desc:"拉新/低频，重视便捷与价格", value:"会员价、积分累计、基础延迟退房（视品牌政策）", kpi:"转化率 / 首住转复住", next:"首住礼包 + 引导直订（免 OTA）"},
+      {seg:"银会员（成长）", desc:"开始跨品牌，对权益敏感", value:"更高积分倍率、更多券包、部分早餐/升级机会", kpi:"直订占比 / 客单价", next:"场景权益：洗衣/早餐券联动房价包"},
+      {seg:"金会员（高价值）", desc:"商务/差旅，中高频", value:"更强升级、延迟退房、专属客服（视政策）", kpi:"复购率 / 房晚", next:"企业协议价 + 会员等级加速"},
+      {seg:"铂金及以上（旗舰）", desc:"高端品牌主力，追求体验确定性", value:"高端品牌优先升级、权益叠加、体验保障", kpi:"NPS / 投诉率", next:"与高端 IoT（睡眠/AR）绑定为“可售卖权益”"},
+      {seg:"运营活动（增长）", desc:"积分/券/联名/节日活动", value:"全积分兑换/限时折扣/加购礼包（示例）", kpi:"活动 GMV / 召回率", next:"A/B 实验 + 城市/人群分层投放"},
+    ];
+
+        toast("已更新审批状态（演示）");
+        render();
+      };
+
+      $("approveSleep")?.addEventListener("click", ()=> toggle("sleep"));
+      $("approveAR")?.addEventListener("click", ()=> toggle("ar"));
+      $("goSleep")?.addEventListener("click", ()=>{
+        const on = state.premiumByHotel[r.hotelCode]?.sleep;
+        if(!on){ toast("睡眠模块未开通"); return; }
+        toast("睡眠模块：已开通（演示）");
+      });
+      $("goAR")?.addEventListener("click", ()=>{
+        const on = state.premiumByHotel[r.hotelCode]?.ar;
+        if(!on){ toast("AR 模块未开通"); return; }
+        toast("AR 模块：已开通（演示）");
+      });
+      return;
+    }
+
+    if(state.view==="fleet"){
+      // category filter not meaningful here
+      const q = state.q.trim().toLowerCase();
+      let rows = state.fleet;
+      if(state.filterHotel !== "ALL") rows = rows.filter(r=>r.hotelCode===state.filterHotel);
+      if(q) rows = rows.filter(r=>Object.values(r).join(" ").toLowerCase().includes(q));
+      return rows;
+    }
+    if(state.view==="devices") return applyFilters(state.devices);
+    if(state.view==="alerts") return applyFilters(state.alerts);
+    if(state.view==="workorders") return applyFilters(state.workorders);
+    if(state.view==="premium") return applyFilters(state.premiumRows||[]);
+    if(state.view==="member") return applyFilters(state.memberRows||[]);
+    return [];
+  }
+
+  function setActiveNav(){
+    document.querySelectorAll(".navBtn").forEach(btn=>{
+      btn.classList.toggle("active", btn.dataset.view===state.view);
+    });
+  }
+
+  function renderHeader(){
+    const meta = VIEW_META[state.view];
+    $("viewTitle").textContent = meta.title;
+    $("viewSubtitle").textContent = meta.subtitle;
+
+    const isScenes = state.view==="scenes";
+    const isROI = state.view==="roi";
+    $("sceneForm").style.display = isScenes ? "block" : "none";
+    $("roiForm").style.display = isROI ? "block" : "none";
+    $("contextForm").style.display = (isScenes || isROI) ? "none" : "block";
+
+    $("btnQuickAction").textContent = (isScenes ? "执行场景" : isROI ? "复制话术" : state.view==="premium" ? "总部审批" : "一键处置");
+  }
+
+  function renderKPIs(rows){
+    const wrap = $("kpiCards");
+    if(state.view==="scenes" || state.view==="roi"){
+      wrap.style.display = "none";
+      return;
+    }
+    wrap.style.display = "grid";
+    const kpis = VIEW_META[state.view].kpis(rows);
+    wrap.innerHTML = "";
+    kpis.forEach(k=>{
+      const dot = k.dot ? `<span class="dot" style="${k.dot==='good'?'background:var(--good)':''}${k.dot==='warn'?'background:var(--warn)':''}${k.dot==='bad'?'background:var(--bad)':''}"></span>` : `<span class="dot"></span>`;
+      wrap.insertAdjacentHTML("beforeend", `
+        <div class="kpi">
+          <div class="label">${dot}${escapeHTML(k.label)}</div>
+          <div class="value">${escapeHTML(String(k.value))}</div>
+          <div class="hint">${escapeHTML(k.hint||"")}</div>
+        </div>
+      `);
+    });
+  }
+
+  function rowKey(r){ return r.id || r.hotelCode || JSON.stringify(r); }
+
+  function renderTable(rows){
+    const thead = $("thead");
+    const tbody = $("tbody");
+    if(state.view==="scenes" || state.view==="roi"){
+      $("tableWrap").style.display = "none";
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      return;
+    }
+    $("tableWrap").style.display = "block";
+
+    const cols = VIEW_META[state.view].columns;
+    thead.innerHTML = `<tr>${cols.map(c=>`<th>${escapeHTML(c.label)}</th>`).join("")}</tr>`;
+    tbody.innerHTML = rows.map(r=>{
+      const tds = cols.map(c=>{
+        const val = c.render ? c.render(r) : escapeHTML(r[c.key] ?? "");
+        return `<td>${val}</td>`;
+      }).join("");
+      const sel = state.selected && state.selected.__key === rowKey(r) ? 'style="background: rgba(170,220,255,.08)"' : '';
+      return `<tr data-key="${rowKey(r)}" ${sel}>${tds}</tr>`;
+    }).join("");
+
+    tbody.querySelectorAll("tr").forEach(tr=>{
+      tr.addEventListener("click", ()=>{
+        const key = tr.dataset.key;
+        const found = rows.find(x=>rowKey(x)===key);
+        if(found){
+          state.selected = Object.assign({__key:key}, found);
+          renderDetail();
+          tbody.querySelectorAll("tr").forEach(rtr=>{
+            rtr.style.background = (rtr.dataset.key===key) ? "rgba(170,220,255,.08)" : "";
+          });
+        }
+      });
+    });
+  }
+
+  function renderDetail(){
+    const d = $("detail");
+    if(state.view==="scenes"){
+      $("detailMeta").textContent = "场景预览";
+      d.innerHTML = renderSceneDetailHTML();
+      bindSceneDetailActions();
+      return;
+    }
+    if(state.view==="roi"){
+      $("detailMeta").textContent = "ROI 输出";
+      d.innerHTML = renderROIDetailHTML();
+      bindROIDetailActions();
+
+
+    if(state.view==="member"){
+      $("detailMeta").textContent = "会员运营视角";
+      d.innerHTML = `
+        <h4>华住会会员 · 运营闭环（演示）</h4>
+        <p>左侧为“会员分层/活动策略”清单；右侧用于呈现与门店运营的联动：价格、权益、履约与体验指标。</p>
+        <div class="row" style="margin-top:10px;">
+          <span class="tag good"><span class="s"></span>直订入口</span>
+          <span class="tag"><span class="s"></span>积分资产</span>
+          <span class="tag warn"><span class="s"></span>权益履约</span>
+        </div>
+        <p class="note" style="margin-top:10px;">关键理念：把“会员权益”做成可交付的服务能力（IoT、SOP、SLA），而不是仅靠折扣与券。</p>
+      `;
+      return;
+    }
+
+    if(state.view==="premium"){
+      $("detailMeta").textContent = "总部审批面板";
+      d.innerHTML = `
+        <h4>总部审批 · 高端能力开通</h4>
+        <p>选择左侧“高端能力”列表中的门店行，可在此对该门店进行审批开通（演示）。</p>
+        <p class="note">规则：仅 <span class="mono">花间堂 / 喜悦</span> 等高端与试点门店可申请；全季/桔子等标准版默认不开放，以稳定与降本为优先。</p>
+      `;
+      return;
+    }
+
+      return;
+    }
+
+
+    if(!state.selected){
+      $("detailMeta").textContent = "未选择";
+      if(state.view==="devices"){
+        const count = lowBatteryLocks(10).length;
+        d.innerHTML = `
+          <h4>设备运营快捷动作</h4>
+          <p>你可以在这里一键生成“门锁电量≤10%”的房间清单，并批量派发更换电池工单（演示）。</p>
+          <p><span class="muted">当前过滤范围内低电量门锁：</span><span class="mono">${count}</span></p>
+          <div class="row">
+            <span class="chip" id="actLowBattery">一键生成清单并派单</span>
+            <span class="chip" id="actExportDevices">导出当前设备列表</span>
+            <span class="chip" id="actGoROI">查看加盟 ROI</span>
+          </div>
+          <p class="note">真实系统可对接门锁厂商/网关上报的电量遥测，或通过周期性巡检自动采集，并在阈值触发时生成工单与SLA。</p>
+        `;
+        $("actLowBattery")?.addEventListener("click", ()=> $("btnQuickAction")?.click());
+        $("actExportDevices")?.addEventListener("click", ()=> exportCurrentView());
+        $("actGoROI")?.addEventListener("click", ()=>{ state.view="roi"; render(); toast("已切换到加盟 ROI"); });
+        return;
+      }
+      d.innerHTML = `
+        <h4>请选择一条记录</h4>
+        <p>左侧点击酒店 / 设备 / 告警 / 工单，将在这里显示建议、SOP 与快捷动作。</p>
+        <div class="row">
+          <span class="chip">一键派单</span>
+          <span class="chip">触发场景</span>
+          <span class="chip">查看历史</span>
+        </div>
+      `;
+      return;
+    }
+    $("detailMeta").textContent = `更新于 ${nowTs()}`;
+
+    if(state.view==="fleet"){
+      const r = state.selected;
+      d.innerHTML = `
+        <h4>${escapeHTML(r.hotel)}</h4>
+        <p><span class="muted">门店：</span><span class="mono">${escapeHTML(r.hotelCode)}</span>　　<span class="muted">城市/品牌：</span>${escapeHTML(r.city)} · ${escapeHTML(r.brand)}</p>
+        <p><span class="muted">覆盖率：</span><span class="mono">${r.coverage}%</span>　　<span class="muted">在线：</span><span class="mono">${r.online}</span>　　<span class="muted">离线：</span><span class="mono">${r.offline}</span>　　<span class="muted">降级：</span><span class="mono">${r.degraded}</span></p>
+        <p><span class="muted">未闭环告警：</span><span class="mono">${r.alertsOpen}</span>　　<span class="muted">能耗风险：</span><span class="mono">${r.energyRisk}</span></p>
+        <p><span class="muted">建议：</span>优先治理“网关离线/网络质量”，其次对门锁低电量做“批量预防性更换”，最后用“退房节能”策略稳定能耗与投诉。</p>
+        <div class="row">
+          <span class="chip" id="actGoDevices">进入设备中心（该酒店）</span>
+          <span class="chip" id="actGoAlerts">查看告警（该酒店）</span>
+          <span class="chip" id="actScore">生成门店治理评分</span>
+        </div>
+      `;
+      $("actGoDevices")?.addEventListener("click", ()=>{
+        state.filterHotel = r.hotelCode;
+        $("filterHotel").value = state.filterHotel;
+        state.view = "devices";
+        state.selected = null;
+        render();
+        toast("已切换到设备中心，并锁定门店过滤");
+      });
+      $("actGoAlerts")?.addEventListener("click", ()=>{
+        state.filterHotel = r.hotelCode;
+        $("filterHotel").value = state.filterHotel;
+        state.view = "alerts";
+        state.selected = null;
+        render();
+        toast("已切换到告警中心，并锁定门店过滤");
+      });
+      $("actScore")?.addEventListener("click", ()=>{
+        toast("治理评分已生成（演示）：覆盖率/离线率/闭环率/版本一致性");
+      });
+      return;
+    }
+
+    if(state.view==="devices"){
+      const r = state.selected;
+      d.innerHTML = `
+        <h4>${escapeHTML(r.id)} · ${escapeHTML(r.hotel)}</h4>
+        <p><span class="muted">房间/区域：</span><span class="mono">${escapeHTML(r.room)}</span>　　<span class="muted">品类：</span>${tagCat(r.category)}　　<span class="muted">状态：</span>${tagStatus(r.status)}</p>
+        <p><span class="muted">供应商：</span>${escapeHTML(r.vendor)}　　<span class="muted">协议：</span><span class="mono">${escapeHTML(r.protocol)}</span>　　<span class="muted">固件：</span><span class="mono">${escapeHTML(r.firmware)}</span></p>
+        <p><span class="muted">健康度：</span><span class="mono">${r.health}</span>${r.battery===null ? "" : `　　<span class="muted">电量：</span><span class="mono">${r.battery}%</span>`}　　<span class="muted">最近心跳：</span>${escapeHTML(r.lastSeen)}</p>
+        <p><span class="muted">建议：</span>${escapeHTML(r.notes)}</p>
+        <div class="row">
+          <span class="chip" id="actWO">从设备生成工单</span>
+          <span class="chip" id="actUpgrade">安排固件升级</span>
+          <span class="chip" id="actRunScene">对该房执行场景</span>
+        </div>
+      `;
+      bindCommonActions();
+      return;
+    }
+
+    if(state.view==="alerts"){
+      const r = state.selected;
+      d.innerHTML = `
+        <h4>${escapeHTML(r.id)} · ${escapeHTML(r.type)}</h4>
+        <p><span class="muted">等级：</span>${tagSev(r.sev)}　　<span class="muted">状态：</span>${alertStatusTag(r.status)}　　<span class="muted">发生：</span>${escapeHTML(r.created)}</p>
+        <p><span class="muted">酒店：</span>${escapeHTML(r.hotel)}　　<span class="muted">房间/区域：</span><span class="mono">${escapeHTML(r.room)}</span></p>
+        <p><span class="muted">品类：</span>${tagCat(r.category)}　　<span class="muted">设备：</span><span class="mono">${escapeHTML(r.deviceId)}</span></p>
+        <p><span class="muted">处置建议：</span>${escapeHTML(r.msg)}</p>
+        <div class="row">
+          <span class="chip" id="actAck">确认（ACK）</span>
+          <span class="chip" id="actWO">生成工单</span>
+          <span class="chip" id="actClose">关闭告警</span>
+        </div>
+      `;
+      bindCommonActions();
+      return;
+    }
+
+    if(state.view==="workorders"){
+      const r = state.selected;
+      d.innerHTML = `
+        <h4>${escapeHTML(r.id)} · ${escapeHTML(r.title)}</h4>
+        <p><span class="muted">优先级：</span>${tagSev(r.priority)}　　<span class="muted">状态：</span>${tagWO(r.state)}　　<span class="muted">SLA：</span><span class="mono">${escapeHTML(r.sla)}</span></p>
+        <p><span class="muted">酒店：</span>${escapeHTML(r.hotel)}　　<span class="muted">房间/区域：</span><span class="mono">${escapeHTML(r.room)}</span></p>
+        <p><span class="muted">品类：</span>${tagCat(r.category)}　　<span class="muted">设备：</span><span class="mono">${escapeHTML(r.deviceId)}</span></p>
+        <p><span class="muted">负责人：</span>${escapeHTML(r.owner)}　　<span class="muted">最近更新：</span>${escapeHTML(r.updated)}</p>
+        <p><span class="muted">说明：</span>${escapeHTML(r.desc)}</p>
+        <div class="row">
+          <span class="chip" id="actStart">开始处理</span>
+          <span class="chip" id="actDone">标记完成</span>
+          <span class="chip" id="actSLA">升级SLA</span>
+        </div>
+      `;
+      bindCommonActions();
+      return;
+    }
+  }
+
+  function bindCommonActions(){
+    $("actWO")?.addEventListener("click", ()=> createWorkOrderFromSelection());
+    $("actUpgrade")?.addEventListener("click", ()=> toast("已创建固件升级窗口（演示）"));
+    $("actRunScene")?.addEventListener("click", ()=>{
+      // prefill scenes
+      state.view = "scenes";
+      render();
+      toast("已切换到场景联动，可选择模板并执行（演示）");
+    });
+
+    $("actAck")?.addEventListener("click", ()=>{
+      if(state.view!=="alerts" || !state.selected) return;
+      const target = state.alerts.find(a=>a.id===state.selected.id);
+      if(target && target.status==="OPEN"){
+        target.status="ACK";
+        toast("告警已确认（ACK）");
+        updateBadges();
+        state.selected = Object.assign({__key:target.id}, target);
+        render();
+      }else{
+        toast("该告警无需重复确认");
+      }
+    });
+
+    $("actClose")?.addEventListener("click", ()=>{
+      if(state.view!=="alerts" || !state.selected) return;
+      const target = state.alerts.find(a=>a.id===state.selected.id);
+      if(target && target.status!=="CLOSED"){
+        target.status="CLOSED";
+        toast("告警已关闭（CLOSED）");
+        updateBadges();
+        state.selected = null;
+        render();
+      }
+    });
+
+    $("actStart")?.addEventListener("click", ()=>{
+      if(state.view!=="workorders" || !state.selected) return;
+      const target = state.workorders.find(w=>w.id===state.selected.id);
+      if(target && target.state!=="DONE"){
+        target.state="IN_PROGRESS";
+        target.updated="刚刚";
+        toast("工单已进入处理中");
+        updateBadges();
+        state.selected = Object.assign({__key:target.id}, target);
+        render();
+      }
+    });
+
+    $("actDone")?.addEventListener("click", ()=>{
+      if(state.view!=="workorders" || !state.selected) return;
+      const target = state.workorders.find(w=>w.id===state.selected.id);
+      if(target){
+        target.state="DONE";
+        target.updated="刚刚";
+        toast("工单已标记完成");
+        updateBadges();
+        state.selected = null;
+        render();
+      }
+    });
+
+    $("actSLA")?.addEventListener("click", ()=> toast("已触发 SLA 升级（演示）"));
+  }
+
+  
+  function lowBatteryLocks(thresholdPct=10){
+    // returns locks with battery <= threshold, respecting current hotel filter if any
+    const hotelFilter = state.filterHotel;
+    return state.devices
+      .filter(d => d.category==="LOCK" && typeof d.battery==="number" && d.battery<=thresholdPct)
+      .filter(d => hotelFilter==="ALL" ? true : d.hotelCode===hotelFilter)
+      .sort((a,b)=> (a.hotelCode+a.room).localeCompare(b.hotelCode+b.room));
+  }
+
+  function buildLowBatteryCSV(list){
+    const head = ["hotelCode","hotel","room","deviceId","batteryPct","lastSeen","vendor","firmware"];
+    const lines = [head.join(",")].concat(list.map(d=>{
+      const row = [d.hotelCode,d.hotel,d.room,d.id,d.battery,d.lastSeen,d.vendor,d.firmware]
+        .map(x => `"${String(x??"").replaceAll('"','""')}"`);
+      return row.join(",");
+    }));
+    return lines.join("\n");
+  }
+
+  function createBatteryWorkOrders(list){
+    const created = [];
+    list.forEach(d=>{
+      const newId = "WO-" + Math.floor(8000 + Math.random()*999);
+      const wo = {
+        id: newId,
+        hotelCode: d.hotelCode,
+        hotel: d.hotel,
+        room: d.room,
+        deviceId: d.id,
+        category: d.category,
+        priority: "P2",
+        state: "NEW",
+        owner: "工程部",
+        sla: "24h",
+        updated: "刚刚",
+        title: `更换电池 · 智能门锁（<=10%）`,
+        desc: `系统检测到门锁电量 ${d.battery}%（阈值 10%）。建议：批量预防性更换电池；更换后回写电量与关闭相关告警。`
+      };
+      state.workorders.unshift(wo);
+      created.push(wo);
+    });
+    updateBadges();
+    return created;
+  }
+
+  function createWorkOrderFromSelection(){
+    if(!state.selected){
+      toast("请先选择一条记录");
+      return;
+    }
+    let wo = null;
+    const newId = "WO-" + Math.floor(8000 + Math.random()*999);
+    if(state.view==="devices"){
+      const r = state.selected;
+      wo = {
+        id: newId,
+        hotelCode: r.hotelCode,
+        hotel: r.hotel,
+        room: r.room,
+        deviceId: r.id,
+        category: r.category,
+        priority: "P2",
+        state: "NEW",
+        owner: "工程部",
+        sla: "8h",
+        updated: "刚刚",
+        title: `现场巡检 · ${catName(r.category)} · 健康复核`,
+        desc: `从设备 ${r.id} 生成。建议：检查网络/协议/供电；必要时升级固件并回写结果。`
+      };
+    }else if(state.view==="alerts"){
+      const r = state.selected;
+      wo = {
+        id: newId,
+        hotelCode: r.hotelCode,
+        hotel: r.hotel,
+        room: r.room,
+        deviceId: r.deviceId,
+        category: r.category,
+        priority: r.sev,
+        state: "NEW",
+        owner: "值班经理",
+        sla: r.sev==="P1" ? "2h" : "8h",
+        updated: "刚刚",
+        title: `告警处置 · ${r.type}`,
+        desc: `关联告警 ${r.id}（${r.sev}）。建议：${r.msg}`
+      };
+    }else{
+      toast("当前视图不支持生成工单");
+      return;
+    }
+
+    state.workorders.unshift(wo);
+    updateBadges();
+    toast(`已生成工单 ${newId}`);
+
+    // optional: jump
+    state.view = "workorders";
+    state.selected = null;
+    render();
+  }
+
+  function catName(k){
+    const m = {LOCK:"智能门锁",HVAC:"空调",LIGHT:"灯光",LAUNDRY:"洗衣机",GATEWAY:"网关"};
+    return m[k]||k;
+  }
+
+  function downloadText(filename, text){
+    const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCurrentView(){
+    if(state.view==="scenes"){
+      const conf = sceneConfig();
+      downloadText("scene_config.json", JSON.stringify(conf, null, 2));
+      toast("已导出场景配置（json）");
+      return;
+    }
+    if(state.view==="roi"){
+      const d = roiCompute();
+      const lines = [
+        `加盟 ROI 导出（${nowTs()}）`,
+        `房间数：${d.rooms}`,
+        `套餐：${d.packName}`,
+        `一次性投入 CAPEX：${fmtMoney(d.capexTotal)} 元`,
+        `每月净收益：${fmtMoney(d.monthlyNet)} 元/月`,
+        `回本周期：${d.paybackMonths} 月`,
+        `三年净收益：${fmtMoney(d.net3y)} 元`
+      ].join("\n");
+      downloadText("roi_export.txt", lines);
+      toast("已导出 ROI（txt）");
+      return;
+    }
+    const rows = currentRows();
+    const cols = VIEW_META[state.view].columns;
+    const head = cols.map(c=>c.label);
+    const csv = [head.join(",")].concat(rows.map(r=>{
+      return cols.map(c=>{
+        const raw = r[c.key];
+        const v = (raw===undefined || raw===null) ? "" : String(raw).replaceAll('"','""');
+        return `"${v}"`;
+      }).join(",");
+    })).join("\n");
+    downloadText(`${state.view}_export.csv`, csv);
+    toast("已导出当前视图（csv）");
+  }
+
+  /* Scenes */
+  function syncSceneLabels(){
+    $("sceneTempVal").textContent = $("sceneTemp").value;
+    $("sceneLightVal").textContent = $("sceneLight").value;
+  }
+
+  function sceneConfig(){
+    const roomVal = $("sceneRoom").value || "";
+    const parts = roomVal.split("｜");
+    const hotelCode = parts[0] || "";
+    const room = parts[1] || "";
+    return {
+      template: $("sceneTemplate").value,
+      target: { hotelCode, room },
+      params: {
+        hvacTempC: Number($("sceneTemp").value),
+        lightBrightnessPct: Number($("sceneLight").value)
+      },
+      generatedAt: nowTs()
+    };
+  }
+
+  function renderSceneDetailHTML(){
+    const conf = sceneConfig();
+    const templateName = $("sceneTemplate").options[$("sceneTemplate").selectedIndex]?.text || "";
+    return `
+      <h4>场景联动 · 预览</h4>
+      <p><span class="muted">模板：</span>${escapeHTML(templateName)}</p>
+      <p><span class="muted">目标：</span><span class="mono">${escapeHTML(($("sceneRoom").value||""))}</span></p>
+      <p><span class="muted">参数：</span><span class="mono">空调 ${conf.params.hvacTempC}°C</span>　　<span class="mono">灯光 ${conf.params.lightBrightnessPct}%</span></p>
+      <p><span class="muted">说明：</span>该联动在真实系统中通常由 PMS 事件触发（入住/退房/续住/免打扰），此处提供“手动执行”用于演示与调试。</p>
+      <div class="row">
+        <span class="chip" id="scenePreview2">预览联动效果</span>
+        <span class="chip" id="sceneExecute2">执行场景</span>
+        <span class="chip" id="sceneExport2">导出配置</span>
+      </div>
+      <p class="note">商业化的关键不是“会联动”，而是把联动变成“可配置、可复制、可计费”的能力包。</p>
+    `;
+  }
+
+  function bindSceneDetailActions(){
+    $("scenePreview2")?.addEventListener("click", ()=> toast("预览：门锁开锁→灯光渐亮→空调设定→PMS回写（演示）"));
+    $("sceneExecute2")?.addEventListener("click", ()=>{
+      toast("已执行场景：指令下发成功率 99%（演示）");
+      // create a demo workorder if scene fails condition
+      if(Math.random()<0.12){
+        toast("提示：检测到部分设备响应超时，建议生成工单（演示）");
+      }
+    });
+    $("sceneExport2")?.addEventListener("click", ()=>{
+      const conf = sceneConfig();
+      downloadText("scene_config.json", JSON.stringify(conf, null, 2));
+      toast("已导出场景配置（json）");
+    });
+  }
+
+  /* ROI */
+  function syncROILabels(){
+    $("roiRoomsVal").textContent = $("roiRooms").value;
+    $("roiCapexVal").textContent = $("roiCapex").value;
+    $("roiSaaSVal").textContent = $("roiSaaS").value;
+    $("roiLaborSaveVal").textContent = Number($("roiLaborSave").value).toFixed(1);
+    $("roiLaborCostVal").textContent = $("roiLaborCost").value;
+    $("roiEnergyVal").textContent = $("roiEnergy").value;
+    $("roiOpexVal").textContent = $("roiOpex").value;
+  }
+
+  function roiCompute(){
+    const rooms = Number($("roiRooms").value);
+    const capexPerRoom = Number($("roiCapex").value);
+    const saasPerRoom = Number($("roiSaaS").value);
+    const laborSavePer100 = Number($("roiLaborSave").value);
+    const laborCost = Number($("roiLaborCost").value);
+    const energyPerRoom = Number($("roiEnergy").value);
+    const opexPerRoom = Number($("roiOpex").value);
+    const pack = $("roiPack").value;
+
+    const packName = $("roiPack").options[$("roiPack").selectedIndex].text;
+
+    // pack factor: value density vs cost; used as a simple multiplier for energy & labor
+    const factor = pack==="basic" ? 0.75 : (pack==="std" ? 1.00 : 1.15);
+
+    const capexTotal = rooms * capexPerRoom;
+    const saasMonthly = rooms * saasPerRoom;
+    const opexMonthly = rooms * opexPerRoom;
+    const laborSaveMonthly = (rooms/100.0) * laborSavePer100 * laborCost * factor;
+    const energySaveMonthly = rooms * energyPerRoom * factor;
+
+    const monthlyNet = Math.max(0, laborSaveMonthly + energySaveMonthly - saasMonthly - opexMonthly);
+    const paybackMonths = monthlyNet>0 ? Math.max(1, Math.round(capexTotal / monthlyNet)) : 999;
+    const net3y = monthlyNet*36 - capexTotal;
+
+    return {rooms, capexPerRoom, saasPerRoom, laborSavePer100, laborCost, energyPerRoom, opexPerRoom, pack, packName, factor, capexTotal, saasMonthly, opexMonthly, laborSaveMonthly, energySaveMonthly, monthlyNet, paybackMonths, net3y};
+  }
+
+  function renderROIDetailHTML(){
+    const d = roiCompute();
+    const payback = d.paybackMonths>=999 ? "不可回本（净收益为0）" : `${d.paybackMonths} 个月`;
+    return `
+      <h4>加盟 ROI · 决策摘要</h4>
+      <p><span class="muted">房间数：</span><span class="mono">${d.rooms}</span>　　<span class="muted">套餐：</span>${escapeHTML(d.packName)}</p>
+      <p><span class="muted">一次性投入 CAPEX：</span><span class="mono">${fmtMoney(d.capexTotal)}</span> 元</p>
+      <p><span class="muted">每月节省人力：</span><span class="mono">${fmtMoney(d.laborSaveMonthly)}</span> 元/月</p>
+      <p><span class="muted">每月节能收益：</span><span class="mono">${fmtMoney(d.energySaveMonthly)}</span> 元/月</p>
+      <p><span class="muted">每月平台费：</span><span class="mono">${fmtMoney(d.saasMonthly)}</span> 元/月　　<span class="muted">每月运维成本：</span><span class="mono">${fmtMoney(d.opexMonthly)}</span> 元/月</p>
+      <p><span class="muted">每月净收益：</span><span class="mono">${fmtMoney(d.monthlyNet)}</span> 元/月</p>
+      <p><span class="muted">回本周期：</span><span class="mono">${payback}</span></p>
+      <p><span class="muted">三年净收益：</span><span class="mono">${fmtMoney(d.net3y)}</span> 元</p>
+      <div class="row">
+        <span class="chip" id="roiPitch">生成一段“对加盟商讲”的话术</span>
+        <span class="chip" id="roiAssump">查看口径/假设</span>
+        <span class="chip" id="roiExport">导出ROI</span>
+      </div>
+      <p class="note">一段好话术要同时命中三件事：钱（回本）、稳（SLA闭环）、体验（住客口碑）。</p>
+    `;
+  }
+
+  function bindROIDetailActions(){
+    $("roiPitch")?.addEventListener("click", ()=>{
+      const d = roiCompute();
+      const payback = d.paybackMonths>=999 ? "当前口径下净收益不足以覆盖投入" : `预计 ${d.paybackMonths} 个月回本`;
+      const s = `按“人力节省 + 节能收益 - 平台费 - 运维成本”的口径测算：门店 ${d.rooms} 间房，CAPEX 约 ${fmtMoney(d.capexTotal)} 元；每月净收益约 ${fmtMoney(d.monthlyNet)} 元，${payback}。更重要的是把设备能力封装成可复制的运营SOP（入住欢迎/退房节能/免打扰/夜间关怀），并通过告警-工单-SLA形成长期可控的门店治理体系。`;
+      navigator.clipboard?.writeText(s).catch(()=>{});
+      toast("话术已复制到剪贴板（如权限允许）");
+    });
+    $("roiAssump")?.addEventListener("click", ()=>{
+      toast("口径：月净收益=人力节省+节能收益-平台费-运维；回本=CAPEX/月净收益");
+    });
+    $("roiExport")?.addEventListener("click", ()=> exportCurrentView());
+  }
+
+  function bindGlobalEvents(){
+    document.querySelectorAll(".navBtn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        state.view = btn.dataset.view;
+        state.selected = null;
+        render();
+        toast(`已切换：${VIEW_META[state.view].title}`);
+      });
+    });
+
+    $("globalSearch").addEventListener("input", (e)=>{
+      state.q = e.target.value;
+      state.selected = null;
+      render();
+    });
+
+    $("filterHotel").addEventListener("change", (e)=>{
+      state.filterHotel = e.target.value;
+      state.selected = null;
+      render();
+    });
+    $("filterCategory").addEventListener("change", (e)=>{
+      state.filterCategory = e.target.value;
+      state.selected = null;
+      render();
+    });
+
+    $("btnRefresh").addEventListener("click", refreshAll);
+    $("btnExport").addEventListener("click", exportCurrentView);
+
+    $("btnQuickAction").addEventListener("click", ()=>{
+      if(state.view==="scenes"){
+        $("sceneExecute")?.click();
+        toast("已触发执行（演示）");
+        return;
+      }
+      if(state.view==="roi"){
+        $("roiPitch")?.click();
+        return;
+      }
+
+      if(state.view==="devices"){
+        const list = lowBatteryLocks(10);
+        if(!list.length){
+          toast("未发现电量<=10%的门锁（当前过滤范围内）");
+          return;
+        }
+        // Export list for ops, then create work orders
+        downloadText("low_battery_locks.csv", buildLowBatteryCSV(list));
+        const created = createBatteryWorkOrders(list);
+        toast(`已生成低电量门锁工单：${created.length} 单，并导出清单（csv）`);
+        // Jump to workorders view for verification
+        state.view = "workorders";
+        state.selected = null;
+        render();
+        return;
+      }
+
+      // generic
+      if(state.view==="alerts"){
+        // auto-ack first OPEN P1/P2
+        const a = state.alerts.find(x=>x.status==="OPEN");
+        if(a){
+          a.status="ACK";
+          toast(`已确认告警 ${a.id}（演示）`);
+          updateBadges();
+          state.selected = null;
+          render();
+        }else{
+          toast("暂无可一键处置的告警（演示）");
+        }
+        return;
+      }
+      toast("已触发一键处置：派单/升级/闭环（演示）");
+    });
+
+    $("toggleTheme").addEventListener("click", ()=>{
+      state.theme = state.theme==="dark" ? "light" : "dark";
+      applyTheme();
+      toast("主题已切换");
+    });
+
+    // scenes bindings
+    ["sceneTemplate","sceneRoom","sceneTemp","sceneLight"].forEach(id=>{
+      $(id).addEventListener("input", ()=>{
+        syncSceneLabels();
+        if(state.view==="scenes") renderDetail();
+      });
+      $(id).addEventListener("change", ()=>{
+        syncSceneLabels();
+        if(state.view==="scenes") renderDetail();
+      });
+    });
+
+    $("scenePreview")?.addEventListener("click", ()=> toast("预览：门锁授权→灯光渐亮→空调设定→PMS回写（演示）"));
+    $("sceneExecute")?.addEventListener("click", ()=>{
+      toast("执行成功：入住欢迎场景已下发（演示）");
+      // simulate an alert creation sometimes
+      if(Math.random()<0.10){
+        const conf = sceneConfig();
+        const a = {
+          id: "ALT-" + Math.floor(9900 + Math.random()*999),
+          hotelCode: conf.target.hotelCode,
+          hotel: HOTELS.find(h=>h.code===conf.target.hotelCode)?.name || "未知门店",
+          room: conf.target.room || "未知房间",
+          deviceId: "DEV-XXXXX",
+          category: "HVAC",
+          type: "空调通讯异常",
+          sev: "P2",
+          status: "OPEN",
+          created: "刚刚",
+          msg: "场景执行时检测到空调通讯超时，建议转工单排查协议网关与地址码。"
+        };
+        state.alerts.unshift(a);
+        updateBadges();
+        toast("提示：场景执行产生新告警（演示）");
+      }
+    });
+    $("sceneExport")?.addEventListener("click", ()=>{
+      const conf = sceneConfig();
+      downloadText("scene_config.json", JSON.stringify(conf, null, 2));
+      toast("已导出场景配置（json）");
+    });
+
+    // roi bindings
+    ["roiRooms","roiCapex","roiSaaS","roiLaborSave","roiLaborCost","roiEnergy","roiOpex","roiPack"].forEach(id=>{
+      $(id).addEventListener("input", ()=>{
+        syncROILabels();
+        if(state.view==="roi") renderDetail();
+      });
+      $(id).addEventListener("change", ()=>{
+        syncROILabels();
+        if(state.view==="roi") renderDetail();
+      });
+    });
+  }
+
+  function applyTheme(){
+    if(state.theme==="light"){
+      document.body.classList.add("lightMode");
+      $("themeBadge").textContent = "亮";
+    }else{
+      document.body.classList.remove("lightMode");
+      $("themeBadge").textContent = "暗";
+    }
+  }
+
+  function render(){
+    setActiveNav();
+    renderHeader();
+    const rows = currentRows();
+    renderKPIs(rows);
+    renderTable(rows);
+    renderDetail();
+  }
+
+  function refreshAll(){
+    state.devices = genDevices();
+    // Initialize premium approvals (simulated per hotel). Default: OFF.
+    state.premiumByHotel = {};
+    HOTELS.forEach(h=>{
+      state.premiumByHotel[h.code] = { sleep:false, ar:false };
+    });
+
+
+    state.fleet = genHotelFleet(state.devices);
+    // Build premium view rows
+    state.premiumRows = state.fleet.map(f=>{
+      const eligible = isPremiumEligibleBrand(f.brand);
+      const p = state.premiumByHotel[f.hotelCode] || {sleep:false, ar:false};
+      return {
+        hotelCode: f.hotelCode,
+        hotel: f.hotel,
+        brand: f.brand,
+        city: f.city,
+        eligible,
+        sleep: !!p.sleep,
+        ar: !!p.ar,
+        govern: eligible
+          ? (p.sleep||p.ar ? "建议将高端能力绑定房型/权益，并纳入审计日志。" : "建议先试点 1-2 家门店，建立口径与SOP。")
+          : "标准版门店以稳定与降本为优先。"
+      };
+    });
+
+
+    state.alerts = genAlerts(state.devices);
+    state.workorders = genWorkOrders(state.alerts);
+
+    // reset selection
+    state.selected = null;
+
+    // keep filter values but ensure dropdowns are set
+    populateFilters();
+    updateBadges();
+
+    syncSceneLabels();
+    syncROILabels();
+
+    render();
+    toast("数据已刷新（模拟）");
+  }
+
+  function boot(){
+    bindGlobalEvents();
+    refreshAll();
+    applyTheme();
+  }
+
+  boot();
+
+  // Override quick action to support: 低电量门锁(<=10%) 一键清单 + 批量派单（演示）
+  const qa = $("btnQuickAction");
+  if(qa){
+    qa.addEventListener("click", (e)=>{
+      if(state.view==="devices"){
+        const rows = currentRows().filter(d=>d.category==="LOCK" && typeof d.battery==="number" && d.battery<=10);
+        if(!rows.length){ toast("当前范围无门锁电量≤10%的设备"); return; }
+        const list = rows.slice(0, 24).map(d=>`${d.hotelCode}｜${d.room}｜${d.battery}%｜${d.id}`).join("\n");
+        // Create workorders
+        const created = rows.slice(0, 24).map((d,i)=>({
+          id: "WO-AUTO-" + (90000+i),
+          hotelCode: d.hotelCode,
+          hotel: d.hotel,
+          room: d.room,
+          deviceId: d.id,
+          category: d.category,
+          priority: "P2",
+          state: "NEW",
+          owner: "工程部",
+          sla: "24h",
+          updated: "刚刚",
+          title: "更换电池 · 门锁电量低（≤10%）",
+          desc: `自动巡检触发：门锁电量 ${d.battery}%。建议集中派单分批更换，避免夜间投诉。`
+        }));
+        state.workorders = created.concat(state.workorders);
+        updateBadges();
+        $("detailMeta").textContent = "自动派单结果";
+        $("detail").innerHTML = `
+          <h4>已生成低电量房间清单（门锁≤10%）</h4>
+          <p class="muted">示例清单（最多展示 24 条）：</p>
+          <pre style="white-space:pre-wrap;margin:10px 0;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.88);font-size:12px;">${escapeHTML(list)}</pre>
+          <div class="row">
+            <span class="chip" id="jumpWO">跳转查看新工单</span>
+            <span class="chip" id="copyList">复制清单</span>
+          </div>
+          <p class="note">真实系统：电量可由门锁遥测/网关巡检自动抓取；阈值触发→生成工单→按SLA闭环→审计留痕。</p>
+        `;
+        $("jumpWO")?.addEventListener("click", ()=>{ state.view="workorders"; render(); toast("已切换到工单"); });
+        $("copyList")?.addEventListener("click", async ()=>{
+          try{ await navigator.clipboard.writeText(list); toast("已复制清单"); }catch(_){ toast("复制失败（浏览器权限限制）"); }
+        });
+      }
+    }, {capture:true});
+  }
+
+})();
+</script>
+</body>
+</html>
